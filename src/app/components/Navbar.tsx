@@ -1,6 +1,6 @@
-'use client'
-import React, { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+"use client";
+import React, { useState } from "react";
+import { Menu, X } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,11 +10,11 @@ const Navbar: React.FC = () => {
   };
 
   const navItems = [
-    { label: 'Home', href: '/' },
-    { label: 'Find Tutor', href: '/findTutor' },
-    { label: 'Find Tutor Jobs', href: '/tutor-jobs' },
-    { label: 'Register as Tutor', href: '/register-tutor' },
-    { label: 'About Us', href: '/aboutUs' },
+    { label: "Home", href: "/" },
+    { label: "Find Tutor", href: "/findTutor" },
+    { label: "Find Tutor Jobs", href: "/tutorjobs" },
+    { label: "Register as Tutor", href: "/registertutor" },
+    { label: "About Us", href: "/aboutUs" },
   ];
 
   return (
@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
-            <button 
+            <button
               onClick={toggleMenu}
               className="text-gray-800 hover:text-blue-600 focus:outline-none"
             >
