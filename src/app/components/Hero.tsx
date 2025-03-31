@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
+import tutorImg from '../../../public/TutorImg.webp';
 
 const HeroSection: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +56,7 @@ const HeroSection: React.FC = () => {
         {/* Right Side - Image */}
         <div className="hidden md:flex justify-center items-center">
           <img 
-            src="/public/TutorImg.webp" 
+            src={tutorImg.src} 
             alt="Tutoring Illustration" 
             className="w-full max-w-md rounded-lg shadow-lg"
           />
