@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState, ChangeEvent, FocusEvent, FormEvent } from "react";
 import {
   Search,
   MapPin,
@@ -7,13 +8,65 @@ import {
   DollarSign,
   Filter,
   Send,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-const TutorJobListings = () => {
+// Define types for form data
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  experience: string;
+  availability: string;
+  resume: File | null;
+  message: string;
+}
+
+// Define types for form errors and touched fields
+interface FormErrors {
+  [key: string]: string;
+}
+
+interface TouchedFields {
+  [key: string]: boolean;
+}
+
+// Define type for job listings
+interface Job {
+  id: number;
+  title: string;
+  location: string;
+  rate: string;
+  subject: string;
+  schedule: string;
+  description: string;
+}
+
+const TutorJobListings: React.FC = () => {
+  // Form state
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    experience: "",
+    availability: "",
+    resume: null,
+    message: "",
+  });
+
+  // Form validation state
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<TouchedFields>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+
   // Sample job listings
-  const jobs = [
+  const jobs: Job[] = [
     {
       id: 1,
       title: "Mathematics Tutor",
@@ -56,6 +109,205 @@ const TutorJobListings = () => {
     },
   ];
 
+  // Handle input change
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    // Handle file input separately
+    if (
+      name === "resume" &&
+      "files" in e.target &&
+      e.target.files &&
+      e.target.files[0]
+    ) {
+      setFormData({
+        ...formData,
+        [name]: e.target.files[0],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+
+    // Mark field as touched
+    setTouched({
+      ...touched,
+      [name]: true,
+    });
+
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "",
+      });
+    }
+  };
+
+  // Handle field blur
+  const handleBlur = (
+    e: FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name } = e.target;
+    setTouched({
+      ...touched,
+      [name]: true,
+    });
+    validateField(name, formData[name as keyof FormData]);
+  };
+
+  // Validate individual field
+  const validateField = (name: string, value: string | File | null): string => {
+    let error = "";
+
+    switch (name) {
+      case "name":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Name is required";
+        }
+        break;
+      case "email":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Email is required";
+        } else if (
+          typeof value === "string" &&
+          !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)
+        ) {
+          error = "Invalid email address";
+        }
+        break;
+      case "phone":
+        if (
+          value &&
+          typeof value === "string" &&
+          !/^[0-9+\- ]{10,15}$/i.test(value)
+        ) {
+          error = "Invalid phone number";
+        }
+        break;
+      case "subject":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Subject expertise is required";
+        }
+        break;
+      case "experience":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Experience level is required";
+        }
+        break;
+      case "availability":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Availability is required";
+        }
+        break;
+      case "resume":
+        if (!value) {
+          error = "Resume is required";
+        } else if (value instanceof File) {
+          if (value.size > 5 * 1024 * 1024) {
+            error = "File size must be less than 5MB";
+          } else if (
+            ![
+              "application/pdf",
+              "application/msword",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ].includes(value.type)
+          ) {
+            error = "Only PDF or DOC files are allowed";
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
+
+    return error;
+  };
+
+  // Validate all fields
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+
+    // Mark all fields as touched
+    const newTouched: TouchedFields = {};
+    Object.keys(formData).forEach((key) => {
+      newTouched[key] = true;
+    });
+    setTouched(newTouched);
+
+    // Validate each field
+    Object.entries(formData).forEach(([name, value]) => {
+      const error = validateField(name, value);
+      if (error) {
+        newErrors[name] = error;
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    if (validateForm()) {
+      // Simulate API call
+      setTimeout(() => {
+        console.log("Form submitted successfully:", formData);
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          experience: "",
+          availability: "",
+          resume: null,
+          message: "",
+        });
+        setErrors({});
+        setTouched({});
+        setIsSubmitting(false);
+        setFormSubmitted(true);
+
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setFormSubmitted(false);
+        }, 5000);
+      }, 1000);
+    } else {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Get input classes based on validation state
+  const getInputClasses = (fieldName: string): string => {
+    const baseClasses = "w-full px-4 py-2 border rounded-lg";
+
+    if (!touched[fieldName]) {
+      return `${baseClasses} border-gray-300`;
+    }
+
+    if (errors[fieldName]) {
+      return `${baseClasses} border-red-500 focus:ring-red-500 focus:border-red-500`;
+    }
+
+    return `${baseClasses} border-green-500 focus:ring-green-500 focus:border-green-500`;
+  };
+
   return (
     <>
       <Navbar />
@@ -87,14 +339,14 @@ const TutorJobListings = () => {
                 />
               </div>
               <div className="flex gap-3">
-                <select className="px-4 py-2 border border-gray-300 rounded-lg  text-black">
+                <select className="px-4 py-2 border border-gray-300 rounded-lg text-black">
                   <option value="">Any Subject</option>
                   <option value="math">Mathematics</option>
                   <option value="science">Science</option>
                   <option value="english">English</option>
                   <option value="cs">Computer Science</option>
                 </select>
-                <select className="px-4 py-2 border border-gray-300 rounded-lg  text-black">
+                <select className="px-4 py-2 border border-gray-300 rounded-lg text-black">
                   <option value="">Any Location</option>
                   <option value="remote">Remote</option>
                   <option value="newyork">New York</option>
@@ -152,7 +404,21 @@ const TutorJobListings = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Submit Your Application
             </h2>
-            <form className="space-y-6">
+
+            {/* Success message */}
+            {formSubmitted && (
+              <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded flex items-start">
+                <CheckCircle className="w-5 h-5 mr-2 mt-0.5" />
+                <div>
+                  <p className="font-medium">
+                    Application submitted successfully!
+                  </p>
+                  <p>We'll review your application and contact you soon.</p>
+                </div>
+              </div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="space-y-6">
@@ -167,9 +433,17 @@ const TutorJobListings = () => {
                       type="text"
                       id="name"
                       name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg "
+                      className={getInputClasses("name")}
                     />
+                    {touched.name && errors.name && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" /> {errors.name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -182,9 +456,17 @@ const TutorJobListings = () => {
                       type="email"
                       id="email"
                       name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg "
+                      className={getInputClasses("email")}
                     />
+                    {touched.email && errors.email && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" /> {errors.email}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -197,13 +479,21 @@ const TutorJobListings = () => {
                       type="tel"
                       id="phone"
                       name="phone"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={getInputClasses("phone")}
                     />
+                    {touched.phone && errors.phone && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" /> {errors.phone}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
                       htmlFor="subject"
-                      className="block text-sm font-medium text-gray-700 mb-1 "
+                      className="block text-sm font-medium text-gray-700 mb-1"
                     >
                       Subject Expertise *
                     </label>
@@ -211,10 +501,19 @@ const TutorJobListings = () => {
                       type="text"
                       id="subject"
                       name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       required
                       placeholder="E.g., Mathematics, English, Science"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg placeholder-gray"
+                      className={getInputClasses("subject")}
                     />
+                    {touched.subject && errors.subject && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                        {errors.subject}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {/* Right Column */}
@@ -229,8 +528,11 @@ const TutorJobListings = () => {
                     <select
                       id="experience"
                       name="experience"
+                      value={formData.experience}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      className={getInputClasses("experience")}
                     >
                       <option value="">Select Experience</option>
                       <option value="0-1">Less than 1 year</option>
@@ -238,6 +540,12 @@ const TutorJobListings = () => {
                       <option value="3-5">3-5 years</option>
                       <option value="5+">5+ years</option>
                     </select>
+                    {touched.experience && errors.experience && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                        {errors.experience}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -249,8 +557,11 @@ const TutorJobListings = () => {
                     <select
                       id="availability"
                       name="availability"
+                      value={formData.availability}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      className={getInputClasses("availability")}
                     >
                       <option value="">Select Availability</option>
                       <option value="weekdays">Weekdays</option>
@@ -258,6 +569,12 @@ const TutorJobListings = () => {
                       <option value="weekends">Weekends</option>
                       <option value="flexible">Flexible</option>
                     </select>
+                    {touched.availability && errors.availability && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                        {errors.availability}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -270,12 +587,23 @@ const TutorJobListings = () => {
                       type="file"
                       id="resume"
                       name="resume"
+                      onChange={
+                        handleChange as React.ChangeEventHandler<HTMLInputElement>
+                      }
+                      onBlur={
+                        handleBlur as React.FocusEventHandler<HTMLInputElement>
+                      }
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                      className={getInputClasses("resume")}
                     />
                     <p className="mt-1 text-xs text-gray-500">
                       PDF or DOC format, max 5MB
                     </p>
+                    {touched.resume && errors.resume && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" /> {errors.resume}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -291,16 +619,24 @@ const TutorJobListings = () => {
                   id="message"
                   name="message"
                   rows={4}
+                  value={formData.message}
+                  onChange={handleChange}
                   placeholder="Tell us about your tutoring experience and why you'd be a great fit..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className={getInputClasses("message")}
                 />
               </div>
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-lg font-medium"
+                  disabled={isSubmitting}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-lg font-medium transition ${
+                    isSubmitting
+                      ? "bg-blue-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  } text-white`}
                 >
-                  <Send className="w-5 h-5" /> Submit Application
+                  <Send className="w-5 h-5" />
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
                 </button>
               </div>
             </form>

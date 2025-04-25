@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { ChangeEvent, FormEvent, useState, FocusEvent } from "react";
 import {
   BookOpen,
   Clock,
@@ -10,11 +11,370 @@ import {
   Shield,
   DollarSign,
   Send,
+  AlertCircle,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+// Define types for form data
+interface FormData {
+  hearAboutUS: string;
+  hourlyRate: string;
+  teachingMethod: string;
+  teachingDesc: string;
+  subjects: string;
+  graduation: string;
+  institution: string;
+  fieldOfStudy: string;
+  degree: string;
+  location: string;
+  name: string;
+  email: string;
+  phone: string;
+  experience: string;
+  availability: string;
+  resume: File | null;
+  profilePhoto: File | null;
+}
+
+// Define types for form errors and touched fields
+interface FormErrors {
+  [key: string]: string;
+}
+
+interface TouchedFields {
+  [key: string]: boolean;
+}
+
 const registertutor = () => {
+  // Form state
+  const [formData, setFormData] = useState<FormData>({
+    hearAboutUS: "",
+    hourlyRate: "",
+    teachingMethod: "",
+    teachingDesc: "",
+    subjects: "",
+    graduation: "",
+    institution: "",
+    fieldOfStudy: "",
+    degree: "",
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    experience: "",
+    availability: "",
+    resume: null,
+    profilePhoto: null,
+  });
+
+  // Form validation state
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<TouchedFields>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [terms, setTerms] = useState<boolean>(false);
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+
+  // Handle input change
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    // Handle file input separately
+    if (
+      name === "resume" &&
+      "files" in e.target &&
+      e.target.files &&
+      e.target.files[0]
+    ) {
+      setFormData({
+        ...formData,
+        [name]: e.target.files[0],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+
+    //Handle profile photo
+    if (
+      name === "profilePhoto" &&
+      "files" in e.target &&
+      e.target.files &&
+      e.target.files[0]
+    ) {
+      setFormData({
+        ...formData,
+        [name]: e.target.files[0],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+
+    // Mark field as touched
+    setTouched({
+      ...touched,
+      [name]: true,
+    });
+
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "",
+      });
+    }
+  };
+
+  // Handle field blur
+  const handleBlur = (
+    e: FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name } = e.target;
+    setTouched({
+      ...touched,
+      [name]: true,
+    });
+    validateField(name, formData[name as keyof FormData]);
+  };
+
+  // Validate individual field
+  const validateField = (
+    name: string,
+    value: string | number | File | null | boolean
+  ): string => {
+    let error = "";
+
+    switch (name) {
+      case "hearAboutUS":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Hear About Us is required";
+        }
+        break;
+      case "hourlyRate":
+        if (
+          !value ||
+          (typeof value === "string" && !/^[1-9]\d*$/i.test(value))
+        ) {
+          error = "Hourly Rate is required";
+        }
+        break;
+      case "teachingMethod":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Teaching Method is required";
+        }
+        break;
+      case "teachingDesc":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Teaching Experience is required";
+        }
+        break;
+      case "subjects":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Subject is required";
+        }
+        break;
+      case "graduation":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Graduation year is required";
+        } else if (
+          typeof value === "string" &&
+          !/^(19|20)\d{2}$/i.test(value)
+        ) {
+          error = "Invalid graduation year";
+        }
+        break;
+      case "institution":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Institution name is required";
+        }
+        break;
+      case "fieldOfStudy":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Field of Study is required";
+        }
+        break;
+      case "degree":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Degree is required";
+        }
+        break;
+      case "name":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Name is required";
+        }
+        break;
+      case "email":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Email is required";
+        } else if (
+          typeof value === "string" &&
+          !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)
+        ) {
+          error = "Invalid email address";
+        }
+        break;
+      case "phone":
+        if (
+          !value ||
+          (value &&
+            typeof value === "string" &&
+            !/^[0-9+\- ]{10,15}$/i.test(value))
+        ) {
+          error = "Invalid phone number";
+        }
+        break;
+      case "location":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "City, State is required";
+        }
+        break;
+      case "subjects":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Subject expertise is required";
+        }
+        break;
+      case "experience":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Experience level is required";
+        }
+        break;
+      case "availability":
+        if (!value || (typeof value === "string" && !value.trim())) {
+          error = "Availability is required";
+        }
+        break;
+      case "resume":
+        if (!value) {
+          error = "Resume is required";
+        } else if (value instanceof File) {
+          if (value.size > 5 * 1024 * 1024) {
+            error = "File size must be less than 5MB";
+          } else if (
+            ![
+              "application/pdf",
+              "application/msword",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ].includes(value.type)
+          ) {
+            error = "Only PDF or DOC files are allowed";
+          }
+        }
+        break;
+      case "profilePhoto":
+        if (!value) {
+          error = "Photo is required";
+        } else if (value instanceof File) {
+          if (value.size > 2 * 1024 * 1024) {
+            error = "File size must be less than 2MB";
+          } else if (
+            !["image/png", "image/jpg", "image/jpeg"].includes(value.type)
+          ) {
+            error = "Only JPG, JPEG or PNG files are allowed";
+          }
+        }
+        break;
+      default:
+        break;
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
+
+    return error;
+  };
+
+  // Validate all fields
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+
+    // Mark all fields as touched
+    const newTouched: TouchedFields = {};
+    Object.keys(formData).forEach((key) => {
+      newTouched[key] = true;
+    });
+    setTouched(newTouched);
+
+    // Validate each field
+    Object.entries(formData).forEach(([name, value]) => {
+      const error = validateField(name, value);
+      if (error != "") {
+        newErrors[name] = error;
+        isValid = false;
+      }
+    });
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    if (validateForm()) {
+      // Simulate API call
+      setTimeout(() => {
+        console.log("Form submitted successfully:", formData);
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          location: "",
+          experience: "",
+          availability: "",
+          resume: null,
+          profilePhoto: null,
+          hearAboutUS: "",
+          hourlyRate: "",
+          teachingMethod: "",
+          teachingDesc: "",
+          subjects: "",
+          graduation: "",
+          institution: "",
+          fieldOfStudy: "",
+          degree: "",
+        });
+        setErrors({});
+        setTouched({});
+        setIsSubmitting(false);
+        setFormSubmitted(true);
+
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setFormSubmitted(false);
+        }, 5000);
+      }, 1000);
+    } else {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Get input classes based on validation state
+  const getInputClasses = (fieldName: string): string => {
+    const baseClasses = "w-full px-4 py-2 border border-gray-300 rounded-lg";
+
+    if (!touched[fieldName]) {
+      return `${baseClasses} border-gray-300`;
+    }
+
+    if (errors[fieldName]) {
+      return `${baseClasses} border-red-500 focus:ring-red-500 focus:border-red-500`;
+    }
+
+    return `${baseClasses} border-green-500 focus:ring-green-500 focus:border-green-500`;
+  };
+
   // Benefits of becoming a tutor
   const benefits = [
     {
@@ -257,7 +617,11 @@ const registertutor = () => {
                   Fill out the form below to start your application process.
                 </p>
               </div>
-              <form className="space-y-6 text-black placeholder-gray">
+              <form
+                className="space-y-6 text-black placeholder-gray"
+                onSubmit={handleSubmit}
+                noValidate
+              >
                 {/* Personal Information */}
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -271,9 +635,19 @@ const registertutor = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("name")}
                       />
+                      {touched.name && errors.name && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" /> {errors.name}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -281,9 +655,20 @@ const registertutor = () => {
                       </label>
                       <input
                         type="email"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("email")}
                       />
+                      {touched.email && errors.email && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.email}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -291,9 +676,19 @@ const registertutor = () => {
                       </label>
                       <input
                         type="tel"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                        required
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses("phone")}
                       />
+                      {touched.phone && errors.phone && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.phone}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -301,10 +696,21 @@ const registertutor = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                        placeholder="City, State/Province"
+                        id="location"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("location")}
+                        placeholder="City, State/Province"
                       />
+                      {touched.location && errors.location && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.location}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -320,17 +726,36 @@ const registertutor = () => {
                         Highest Degree *
                       </label>
                       <select
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="degree"
+                        name="degree"
+                        value={formData.degree}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("degree")}
                       >
                         <option value="">Select your highest degree</option>
-                        <option>High School Diploma</option>
-                        <option>Associate's Degree</option>
-                        <option>Bachelor's Degree</option>
-                        <option>Master's Degree</option>
-                        <option>Doctoral Degree</option>
-                        <option>Professional Certification</option>
+                        <option value="High School Diploma">
+                          High School Diploma
+                        </option>
+                        <option value="Associate's Degree">
+                          Associate's Degree
+                        </option>
+                        <option value="Bachelor's Degree">
+                          Bachelor's Degree
+                        </option>
+                        <option value="Master's Degree">Master's Degree</option>
+                        <option value="Doctoral Degree">Doctoral Degree</option>
+                        <option value="Professional Certification">
+                          Professional Certification
+                        </option>
                       </select>
+                      {touched.degree && errors.degree && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.degree}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -338,10 +763,21 @@ const registertutor = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                        placeholder="E.g., Computer Science, Mathematics"
+                        id="fieldOfStudy"
+                        name="fieldOfStudy"
+                        value={formData.fieldOfStudy}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("fieldOfStudy")}
+                        placeholder="E.g., Computer Science, Mathematics"
                       />
+                      {touched.fieldOfStudy && errors.fieldOfStudy && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.fieldOfStudy}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -349,21 +785,42 @@ const registertutor = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="institution"
+                        name="institution"
+                        value={formData.institution}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("institution")}
                       />
+                      {touched.institution && errors.institution && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.institution}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Graduation Year *
                       </label>
                       <input
-                        type="number"
-                        min="1950"
-                        max="2025"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        type="text"
+                        id="graduation"
+                        name="graduation"
+                        inputMode="numeric"
+                        value={formData.graduation}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses("graduation")}
                         required
                       />
+                      {touched.graduation && errors.graduation && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.graduation}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -379,16 +836,29 @@ const registertutor = () => {
                         Years of Experience *
                       </label>
                       <select
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="experience"
+                        name="experience"
+                        value={formData.experience}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("experience")}
                       >
                         <option value="">Select experience level</option>
-                        <option>Less than 1 year</option>
-                        <option>1-2 years</option>
-                        <option>3-5 years</option>
-                        <option>6-10 years</option>
-                        <option>10+ years</option>
+                        <option value="Less than 1 year">
+                          Less than 1 year
+                        </option>
+                        <option value="1-2 years">1-2 years</option>
+                        <option value="3-5 years">3-5 years</option>
+                        <option value="6-10 years">6-10 years</option>
+                        <option value="10+ years">10+ years</option>
                       </select>
+                      {touched.experience && errors.experience && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.experience}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -396,10 +866,21 @@ const registertutor = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                        placeholder="Separate multiple subjects with commas"
+                        id="subjects"
+                        name="subjects"
+                        value={formData.subjects}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("subjects")}
+                        placeholder="Separate multiple subjects with commas"
                       />
+                      {touched.subjects && errors.subjects && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.subjects}
+                        </p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -407,10 +888,21 @@ const registertutor = () => {
                       </label>
                       <textarea
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                         placeholder="Describe your teaching experience, style, and any relevant certifications..."
                         required
+                        id="teachingDesc"
+                        name="teachingDesc"
+                        value={formData.teachingDesc}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses("teachingDesc")}
                       />
+                      {touched.teachingDesc && errors.teachingDesc && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.teachingDesc}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -426,55 +918,111 @@ const registertutor = () => {
                         Availability *
                       </label>
                       <select
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="availability"
+                        name="availability"
+                        value={formData.availability}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
                         required
+                        className={getInputClasses("availability")}
                       >
                         <option value="">Select your availability</option>
-                        <option>Weekday mornings</option>
-                        <option>Weekday afternoons</option>
-                        <option>Weekday evenings</option>
-                        <option>Weekends only</option>
-                        <option>Flexible schedule</option>
+                        <option value="Weekday mornings">
+                          Weekday mornings
+                        </option>
+                        <option value="Weekday afternoons">
+                          Weekday afternoons
+                        </option>
+                        <option value="Weekday evenings">
+                          Weekday evenings
+                        </option>
+                        <option value="Weekends only">Weekends only</option>
+                        <option value="Flexible schedule">
+                          Flexible schedule
+                        </option>
                       </select>
+                      {touched.availability && errors.availability && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.availability}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Preferred Teaching Method *
                       </label>
                       <select
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                         required
+                        id="teachingMethod"
+                        name="teachingMethod"
+                        value={formData.teachingMethod}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses("teachingMethod")}
                       >
                         <option value="">Select teaching preference</option>
-                        <option>In-person only</option>
-                        <option>Online only</option>
-                        <option>Both in-person and online</option>
+                        <option value="In-person only">In-person only</option>
+                        <option value="Online only">Online only</option>
+                        <option value="Both in-person and online">
+                          Both in-person and online
+                        </option>
                       </select>
+                      {touched.teachingMethod && errors.teachingMethod && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.teachingMethod}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Hourly Rate (USD) *
                       </label>
                       <input
-                        type="number"
-                        min="15"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        type="text"
                         placeholder="E.g., 35"
                         required
+                        id="hourlyRate"
+                        name="hourlyRate"
+                        value={formData.hourlyRate}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses("hourlyRate")}
                       />
+                      {touched.hourlyRate && errors.hourlyRate && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.hourlyRate}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         How did you hear about us?
                       </label>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                      <select
+                        required
+                        id="hearAboutUS"
+                        name="hearAboutUS"
+                        value={formData.hearAboutUS}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={getInputClasses("hearAboutUS")}
+                      >
                         <option value="">Select an option</option>
-                        <option>Search Engine</option>
-                        <option>Social Media</option>
-                        <option>Friend Referral</option>
-                        <option>Advertisement</option>
-                        <option>Other</option>
+                        <option value="Search Engine">Search Engine</option>
+                        <option value="Social Media">Social Media</option>
+                        <option value="Friend Referral">Friend Referral</option>
+                        <option value="Advertisement">Advertisement</option>
+                        <option value="Other">Other</option>
                       </select>
+                      {touched.hearAboutUS && errors.hearAboutUS && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.hearAboutUS}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -491,12 +1039,26 @@ const registertutor = () => {
                       </label>
                       <input
                         type="file"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="resume"
+                        name="resume"
+                        onChange={
+                          handleChange as React.ChangeEventHandler<HTMLInputElement>
+                        }
+                        onBlur={
+                          handleBlur as React.FocusEventHandler<HTMLInputElement>
+                        }
                         required
+                        className={getInputClasses("resume")}
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         PDF, DOC, or DOCX (max 5MB)
                       </p>
+                      {touched.resume && errors.resume && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.resume}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -504,11 +1066,26 @@ const registertutor = () => {
                       </label>
                       <input
                         type="file"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                        id="profilePhoto"
+                        name="profilePhoto"
+                        onChange={
+                          handleChange as React.ChangeEventHandler<HTMLInputElement>
+                        }
+                        onBlur={
+                          handleBlur as React.FocusEventHandler<HTMLInputElement>
+                        }
+                        required
+                        className={getInputClasses("profilePhoto")}
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         JPEG or PNG (max 2MB)
                       </p>
+                      {touched.profilePhoto && errors.profilePhoto && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-1" />{" "}
+                          {errors.profilePhoto}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -517,6 +1094,10 @@ const registertutor = () => {
                   <div className="flex items-start">
                     <input
                       type="checkbox"
+                      id="terms"
+                      name="terms"
+                      checked={terms}
+                      onChange={(e) => setTerms(!terms)}
                       className="mt-1 h-4 w-4 text-blue-600 rounded"
                       required
                     />
@@ -537,9 +1118,20 @@ const registertutor = () => {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-bold px-6 py-3 rounded-lg text-lg flex items-center justify-center"
+                    disabled={isSubmitting || !terms}
+                    className={`w-full bg-blue-600 hover:bg-blue-700 transition text-white font-bold px-6 py-3 rounded-lg text-lg flex items-center justify-center ${
+                      isSubmitting
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    } text-white
+                    ${
+                      !terms
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                   >
-                    <Send className="w-5 h-5 mr-2" /> Submit Application
+                    <Send className="w-5 h-5 mr-2" />
+                    {isSubmitting ? "Submitting..." : "Submit Application"}
                   </button>
                   <p className="text-center text-sm text-gray-500 mt-4">
                     Our team will review your application and respond within 48
